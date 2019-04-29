@@ -1,0 +1,13 @@
+{
+  "name": "node-mq",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node producer.js"
+  },
+  "author": "joonak",
+  "license": "ISC",
+  "dependencies": {
+    "amqplib": "^0.5.3"
+  }
+}
