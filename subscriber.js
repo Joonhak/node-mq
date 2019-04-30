@@ -7,8 +7,8 @@ amqp.connect(mqServer, (connErr, conn) => {
   conn.createChannel( (err, ch) => {
     if (err) throw err;
 
-    const ex = 'topic_logs';
-    const key = 'market.coin';
+    const ex = 'realtime-data';
+    const key = 'KRW-BTC';
 
     ch.assertExchange(ex, 'topic', {durable: false});
 
