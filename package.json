@@ -8,6 +8,7 @@
   "author": "joonak",
   "license": "ISC",
   "dependencies": {
-    "amqplib": "^0.5.3"
+    "amqplib": "^0.5.3",
+    "ws": "^6.2.1"
   }
 }
