@@ -28,7 +28,7 @@ const socketData = [
 
 amqp.connect(mqServer, (connErr, conn) => {
   if (connErr) throw connErr;
-  console.log('Connect with rabbitMq host!');
+  console.log('Connect with rabbitMq server!');
 
   conn.createChannel((channErr, ch) => {
     if (channErr) throw channErr;
@@ -43,44 +43,30 @@ amqp.connect(mqServer, (connErr, conn) => {
       });
 
       socket.on('message', msg => {
-        const recieved = JSON.parse(msg);
-        const exchange = 'realtime-data';
-        const key = recieved.code;
-        const { trade_price, trade_volume, change_price, change } = recieved;
-        const change_rate = parseFloat(((change_price / trade_price) * 100).toFixed(2));
+        const received = JSON.parse(msg);
+        const exchange = 'trade-data';
+        const key = received.code.split('-')[0]; // KRW, BTC, ETH
+        const { trade_price, trade_volume, change_price, change, code } = received;
+        const change_rate = Math.round(((change_price / trade_price) * 10000)) / 100;
+        const trade_amount = Math.round(trade_price * trade_volume);
 
         const msgForSend = {
           trade_price,
           trade_volume,
-          trade_amount: parseInt(trade_price * trade_volume), // 원단위까지만
+          trade_amount,
           change_rate: change === 'FALL' ? -(change_rate) : change_rate,
+          code,
         };
 
-        const header = { headers: {"contentType": "application/json"} };
-        const stringifiedMsg = JSON.stringify(msgForSend);
+        const header = {"contentType": "application/json"};
+        const bufferedMessage = Buffer.from(JSON.stringify(msgForSend));
 
         ch.assertExchange(exchange, 'topic', { durable: false });
-        ch.publish(exchange, key, Buffer.from(stringifiedMsg));
-        console.log(' [*] Sent %s to %s', stringifiedMsg, key, header);
+        ch.publish(exchange, key, bufferedMessage, header);
+
+        console.log('[*] Sent "%s" to %s', bufferedMessage, key);
       });
 
     });
   });
 });
-
-// amqp.connect(mqServer, (connErr, conn) => {
-//   if (connErr) throw connErr;
-//
-//   conn.createChannel((err, ch) => {
-//     if (err) throw err;
-//
-//     const ex = 'topic_logs';
-//     const key = 'market.coin';
-//     const msg = JSON.stringify({msg: 'hello world!', topic: 'market'});
-//
-//     ch.assertExchange(ex, 'topic', {durable: false});
-//
-//     ch.publish(ex, key, Buffer.from(msg));
-//     console.log(" [*] Sent %s: %s", key, msg);
-//   });
-// });
