@@ -44,7 +44,7 @@ amqp.connect(mqServer, (connErr, conn) => {
 
       socket.on('message', msg => {
         const received = JSON.parse(msg);
-        const exchange = 'trade-data';
+        const exchange = 'data.trade';
         const key = received.code.split('-')[0]; // KRW, BTC, ETH
         const { trade_price, trade_volume, change_price, change, code } = received;
         const change_rate = Math.round(((change_price / trade_price) * 10000)) / 100;
@@ -58,11 +58,11 @@ amqp.connect(mqServer, (connErr, conn) => {
           code,
         };
 
-        const header = {"contentType": "application/json"};
+        const headers = {"contentType": "application/json"};
         const bufferedMessage = Buffer.from(JSON.stringify(msgForSend));
 
         ch.assertExchange(exchange, 'topic', { durable: false });
-        ch.publish(exchange, key, bufferedMessage, header);
+        ch.publish(exchange, key, bufferedMessage, headers);
 
         console.log('[*] Sent "%s" to %s', bufferedMessage, key);
       });

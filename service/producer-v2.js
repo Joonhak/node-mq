@@ -46,8 +46,8 @@ amqp.connect(mqServer)
             socket.addEventListener('message', e => {
               const received = JSON.parse(e.data);
 
-              const exchange = 'trade-data';
-              const key = received.code.split('-')[0]; // KRW, BTC, ETH
+              const exchange = 'data.trade';
+              const key = received.code.toLowerCase().split('-').join('.'); // krw.btc, krw.eth ...
               const { trade_price, trade_volume, change_price, change, code } = received;
               const change_rate = Math.round( (change_price / trade_price * 10000) ) / 100;
               const trade_amount = Math.round(trade_price * trade_volume);
