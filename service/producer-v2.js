@@ -29,6 +29,7 @@ const socketData = [
 amqp.connect(mqServer)
     .then( conn => {
       console.log('Connected with RabbitMQ server!');
+
       conn.createChannel()
           .then( chann => {
             // socket prepare
@@ -52,7 +53,7 @@ amqp.connect(mqServer)
               const change_rate = Math.round( (change_price / trade_price * 10000) ) / 100;
               const trade_amount = Math.round(trade_price * trade_volume);
 
-              const dataForSend = {
+              const tradeData = {
                 trade_price,
                 trade_volume: trade_volume.toFixed(8),
                 trade_amount,
@@ -60,13 +61,15 @@ amqp.connect(mqServer)
                 change_rate: change === 'FALL' ? - (change_rate) : change_rate,
               };
               const headers = { contentType: 'application/json' };
-              const bufferedData = Buffer.from(JSON.stringify(dataForSend));
+              const bufferedData = Buffer.from(JSON.stringify(tradeData));
 
               chann.assertExchange(exchange, 'topic', { durable: false });
               chann.publish(exchange, key, bufferedData, headers);
 
               console.log(`[*] Sent '${bufferedData}' to '${key}'`);
             });
+
+            // send ping
           })
           .catch(e => {
             console.error('Create Channel Error..');

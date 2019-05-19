@@ -1,0 +1,3 @@
+{
+  "mq-host": "amqp://username:password@127.0.0.1"
+}
