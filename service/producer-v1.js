@@ -2,7 +2,7 @@ const amqp = require('amqplib/callback_api');
 const ws = require('ws');
 const mqServer = require('../mq-config')["mq-host"];
 
-const upbit = 'wss://api.upbit.com/websocket/v1';
+const UPBIT = 'wss://api.upbit.com/websocket/v1';
 const socketData = [
   {ticket: 'test'},
   {
@@ -14,13 +14,13 @@ const socketData = [
       'KRW-BCH',
       'KRW-ETC',
       'KRW-ETH',
-      'KRW-XRP',
-      'KRW-EOS',
-      'KRW-ADA',
       'KRW-LTC',
-      'KRW-ZIL',
+      'KRW-EOS',
       'KRW-OMG',
+      'KRW-ADA',
+      'KRW-XRP',
       'KRW-XLM',
+      'KRW-ZIL',
     ],
   },
   {format: 'DEFAULT'},
@@ -28,13 +28,13 @@ const socketData = [
 
 amqp.connect(mqServer, (connErr, conn) => {
   if (connErr) throw connErr;
-  console.log('Connect with rabbitMq server!');
+  console.log('Connect to rabbitMq server!');
 
   conn.createChannel((channErr, ch) => {
     if (channErr) throw channErr;
     console.log('Channel created!');
 
-    const socket = new ws(upbit, {perMessageDeflate: false});
+    const socket = new ws(UPBIT, {perMessageDeflate: false});
     socket.on('open', () => {
       console.log('socket connected!');
 
@@ -50,7 +50,7 @@ amqp.connect(mqServer, (connErr, conn) => {
         const change_rate = Math.round(((change_price / trade_price) * 10000)) / 100;
         const trade_amount = Math.round(trade_price * trade_volume);
 
-        const msgForSend = {
+        const tradeData = {
           trade_price,
           trade_volume,
           trade_amount,
@@ -58,8 +58,8 @@ amqp.connect(mqServer, (connErr, conn) => {
           code,
         };
 
-        const headers = {"contentType": "application/json"};
-        const bufferedMessage = Buffer.from(JSON.stringify(msgForSend));
+        const headers = { contentType: 'application/json' };
+        const bufferedMessage = Buffer.from(JSON.stringify(tradeData));
 
         ch.assertExchange(exchange, 'topic', { durable: false });
         ch.publish(exchange, key, bufferedMessage, headers);
