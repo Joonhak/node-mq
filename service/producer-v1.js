@@ -1,10 +1,10 @@
 const amqp = require('amqplib/callback_api');
 const ws = require('ws');
-const mqServer = require('../mq-config')["mq-host"];
+require('dotenv').config;
 
 const UPBIT = 'wss://api.upbit.com/websocket/v1';
 const socketData = [
-  {ticket: 'test'},
+  { ticket: 'test' },
   {
     type: 'trade',
     isOnlySnapshot: false,
@@ -23,10 +23,10 @@ const socketData = [
       'KRW-ZIL',
     ],
   },
-  {format: 'DEFAULT'},
+  { format: 'DEFAULT' },
 ];
 
-amqp.connect(mqServer, (connErr, conn) => {
+amqp.connect(process.env.MQ_HOST, (connErr, conn) => {
   if (connErr) throw connErr;
   console.log('Connect to rabbitMq server!');
 
@@ -34,7 +34,7 @@ amqp.connect(mqServer, (connErr, conn) => {
     if (channErr) throw channErr;
     console.log('Channel created!');
 
-    const socket = new ws(UPBIT, {perMessageDeflate: false});
+    const socket = new ws(UPBIT, { perMessageDeflate: false });
     socket.on('open', () => {
       console.log('socket connected!');
 
@@ -45,16 +45,29 @@ amqp.connect(mqServer, (connErr, conn) => {
       socket.on('message', msg => {
         const received = JSON.parse(msg);
         const exchange = 'data.trade';
-        const key = received.code.split('-')[0]; // KRW, BTC, ETH
-        const { trade_price, trade_volume, change_price, change, code } = received;
-        const change_rate = Math.round(((change_price / trade_price) * 10000)) / 100;
+        const key = received.code
+          .toLowerCase()
+          .split('-')
+          .join('.'); // krw.btc, krw.eth ...
+
+        const {
+          trade_price,
+          trade_volume,
+          change_price,
+          change,
+          code,
+        } = received;
+
+        const change_rate =
+          Math.round((change_price / trade_price) * 10000) / 100;
+
         const trade_amount = Math.round(trade_price * trade_volume);
 
         const tradeData = {
           trade_price,
           trade_volume,
           trade_amount,
-          change_rate: change === 'FALL' ? -(change_rate) : change_rate,
+          change_rate: change === 'FALL' ? -change_rate : change_rate,
           code,
         };
 
@@ -65,8 +78,9 @@ amqp.connect(mqServer, (connErr, conn) => {
         ch.publish(exchange, key, bufferedMessage, headers);
 
         console.log('[*] Sent "%s" to %s', bufferedMessage, key);
-      });
 
+        // save data to db
+      });
     });
   });
 });
