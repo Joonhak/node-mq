@@ -1,5 +1,4 @@
-.idea
-**/node_modules
-*.iml
+node_modules/
 
 mq-config.json
+.env

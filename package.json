@@ -9,6 +9,7 @@
   "license": "ISC",
   "dependencies": {
     "amqplib": "^0.5.3",
+    "dotenv": "^8.0.0",
     "ws": "^6.2.1"
   }
 }
